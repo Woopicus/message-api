@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\DTO\UpdateMessageDTO;
+use App\DTO\CreateMessageDTO;
 use App\Service\MessageService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,9 +23,7 @@ class MessageController extends AbstractController
     {
         $messages = $this->messageService->getMessages();
 
-        return $this->json([
-            'data' => $messages,
-        ]);
+        return $this->json(['data' => $messages]);
     }
 
     #[Route('/api/messages/{messageId}', methods: ['GET'])]
@@ -31,68 +31,21 @@ class MessageController extends AbstractController
     {
         $message = $this->messageService->getMessage($messageId);
 
-        return $this->json([
-            'data' => $message,
-        ]);
+        return $this->json(['data' => $message]);
     }
 
     #[Route('/api/messages', methods: ['POST'])]
-    public function createMessage(Request $request): JsonResponse
+    public function createMessage(#[RequestDto] CreateMessageDTO $dto): JsonResponse
     {
-        $type = $request->getPayload()->get('type');
-        $subject = $request->getPayload()->get('subject');
-        $content = $request->getPayload()->get('content');
-        $date = new \DateTimeImmutable($request->getPayload()->get('date'));
-        $senderName = $request->getPayload()->get('senderName');
-        $processedAt = $request->getPayload()->get('processedAt')
-            ? new \DateTimeImmutable($request->getPayload()->get('processedAt'))
-            : null;
-        $handler = $request->getPayload()->get('handler');
-
-        $message = $this->messageService->createMessage(
-            $type,
-            $subject,
-            $content,
-            $date,
-            $senderName,
-            $processedAt,
-            $handler
-        );
-
-        return $this->json([
-            'data' => $message,
-        ], 201);
+        $message = $this->messageService->createMessage($dto);
+        return $this->json(['data' => $message], JsonResponse::Method_CREATED);
     }
 
     #[Route('/api/messages/{messageId}', methods: ['PUT'])]
-    public function updateMessage(Request $request, int $messageId): JsonResponse
+    public function updateMessage(int $messageId, #[RequestDto] UpdateMessageDTO $dto): JsonResponse
     {
-        $type = $request->getPayload()->get('type');
-        $subject = $request->getPayload()->get('subject');
-        $content = $request->getPayload()->get('content');
-        $date = $request->getPayload()->get('date')
-            ? new \DateTimeImmutable($request->getPayload()->get('date'))
-            : null;
-        $senderName = $request->getPayload()->get('senderName');
-        $processedAt = $request->getPayload()->get('processedAt')
-            ? new \DateTimeImmutable($request->getPayload()->get('processedAt'))
-            : null;
-        $handler = $request->getPayload()->get('handler');
-
-        $message = $this->messageService->updateMessage(
-            $messageId,
-            $type,
-            $subject,
-            $content,
-            $date,
-            $senderName,
-            $processedAt,
-            $handler
-        );
-
-        return $this->json([
-            'data' => $message,
-        ]);
+        $message = $this->messageService->updateMessage($messageId, $dto);
+        return $this->json(['data' => $message], JsonResponse::Method_CREATED);
     }
 
     #[Route('/api/messages/{messageId}', methods: ['DELETE'])]
@@ -100,6 +53,6 @@ class MessageController extends AbstractController
     {
         $this->messageService->removeMessage($messageId);
 
-        return $this->json(null);
+        return $this->json(null, JsonResponse::Method_CREATED);
     }
 }
