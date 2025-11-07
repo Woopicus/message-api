@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\DTO\CreateMessageDTO;
+use App\DTO\UpdateMessageDTO;
 use App\Entity\Message;
 use App\Repository\MessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -25,23 +27,16 @@ readonly class MessageService
         return $this->messageRepository->find($messageId);
     }
 
-    public function createMessage(
-        string $type,
-        string $subject,
-        string $content,
-        \DateTimeImmutable $date,
-        string $senderName,
-        ?\DateTimeImmutable $processedAt,
-        ?string $handler
-    ): Message {
+    public function createMessage(CreateMessageDTO $dto): Message
+    {
         $message = new Message();
-        $message->setType($type);
-        $message->setSubject($subject);
-        $message->setContent($content);
-        $message->setDate($date);
-        $message->setSenderName($senderName);
-        $message->setProcessedAt($processedAt);
-        $message->setHandler($handler);
+        $message->setType($dto->type);
+        $message->setSubject($dto->subject);
+        $message->setContent($dto->content);
+        $message->setDate($dto->date ?? new \DateTimeImmutable());
+        $message->setSenderName($dto->senderName);
+        $message->setProcessedAt($dto->processedAt);
+        $message->setHandler($dto->handler);
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();
@@ -49,34 +44,25 @@ readonly class MessageService
         return $message;
     }
 
-    public function updateMessage(
-        int $messageId,
-        string $type,
-        string $subject,
-        string $content,
-        ?\DateTimeImmutable $date,
-        string $senderName,
-        ?\DateTimeImmutable $processedAt,
-        ?string $handler
-    ): ?Message {
+    public function updateMessage(int $messageId, UpdateMessageDTO $dto): ?Message
+    {
         $message = $this->getMessage($messageId);
-
-        if ($message) {
-            $message->setType($type);
-            $message->setSubject($subject);
-            $message->setContent($content);
-
-            if ($date) {
-                $message->setDate($date);
-            }
-
-            $message->setSenderName($senderName);
-            $message->setProcessedAt($processedAt);
-            $message->setHandler($handler);
-
-            $this->entityManager->persist($message);
-            $this->entityManager->flush();
+        if (!$message) {
+            return null;
         }
+
+        $message->setType($dto->type);
+        $message->setSubject($dto->subject);
+        $message->setContent($dto->content);
+        if ($dto->date) {
+            $message->setDate($dto->date);
+        }
+        $message->setSenderName($dto->senderName);
+        $message->setProcessedAt($dto->processedAt);
+        $message->setHandler($dto->handler);
+
+        $this->entityManager->persist($message);
+        $this->entityManager->flush();
 
         return $message;
     }
@@ -84,7 +70,6 @@ readonly class MessageService
     public function removeMessage(int $messageId): void
     {
         $message = $this->getMessage($messageId);
-
         if ($message) {
             $this->entityManager->remove($message);
             $this->entityManager->flush();
