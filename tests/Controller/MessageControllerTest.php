@@ -35,7 +35,7 @@ class MessageControllerTest extends WebTestCase
                 'date' => $dto->date->format('c'),
                 'senderName' => $dto->senderName,
                 'processedAt' => null,
-                'handler' => null
+                'handler' => null,
             ])
         );
 
@@ -45,5 +45,60 @@ class MessageControllerTest extends WebTestCase
         $data = json_decode($response->getContent(), true);
         $this->assertArrayHasKey('data', $data);
         $this->assertSame('info', $data['data']['type']);
+    }
+
+    public function testUpdateMessage(): void
+    {
+        $client = static::createClient();
+
+        $client->request(
+            'POST',
+            '/api/messages',
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'type' => 'info',
+                'subject' => 'Min',
+                'content' => 'Cat',
+                'date' => '2025-11-10T10:00:00+00:00',
+                'senderName' => 'Tester',
+                'processedAt' => null,
+                'handler' => null,
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(201);
+
+        $responseData = json_decode($client->getResponse()->getContent(), true);
+        $messageId = $responseData['data']['id'] ?? null;
+        $this->assertNotNull($messageId, 'Er moet een message ID terugkomen.');
+
+        $client->request(
+            'PUT',
+            "/api/messages/{$messageId}",
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'type' => 'warning',
+                'subject' => 'Update message',
+                'content' => 'New message',
+                'date' => '2025-11-11T10:00:00+00:00',
+                'senderName' => 'Senior Tester',
+                'processedAt' => null,
+                'handler' => 'HandlerX',
+            ])
+        );
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $updateResponse = json_decode($client->getResponse()->getContent(), true);
+        $updatedMessage = $updateResponse['data'];
+
+        $this->assertSame('warning', $updatedMessage['type']);
+        $this->assertSame('Update message', $updatedMessage['subject']);
+        $this->assertSame('New message', $updatedMessage['content']);
+        $this->assertSame('Senior Tester', $updatedMessage['senderName']);
     }
 }

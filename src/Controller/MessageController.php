@@ -44,9 +44,11 @@ class MessageController extends AbstractController
     }
 
     #[Route('/api/messages/{messageId}', methods: ['PUT'])]
-    public function updateMessage(int $messageId, #[RequestDto] UpdateMessageDTO $dto): JsonResponse
+    public function updateMessage(int $messageId, Request $request): JsonResponse
     {
+        $dto = $this->serializer->deserialize($request->getContent(), UpdateMessageDTO::class, 'json');
         $message = $this->messageService->updateMessage($messageId, $dto);
+
         return $this->json(['data' => $message], JsonResponse::HTTP_OK);
     }
 
