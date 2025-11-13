@@ -106,4 +106,13 @@ class MessageControllerTest extends WebTestCase
         $this->assertArrayHasKey('data', $response);
         $this->assertArrayHasKey('id', $response['data']);
     }
+
+    public function testRemoveMessage(): void
+    {
+        $client = static::createClient();
+
+        $client->request('DELETE', '/api/messages/1');
+
+        $this->assertResponseStatusCodeSame(204);
+    }
 }
