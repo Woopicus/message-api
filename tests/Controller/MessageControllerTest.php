@@ -35,7 +35,7 @@ class MessageControllerTest extends WebTestCase
                 'date' => $dto->date->format('c'),
                 'senderName' => $dto->senderName,
                 'processedAt' => null,
-                'handler' => null,
+                'handler' => null
             ])
         );
 
@@ -51,45 +51,36 @@ class MessageControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request(
-            'POST',
-            '/api/messages',
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'type' => 'info',
-                'subject' => 'Min',
-                'content' => 'Cat',
-                'date' => '2025-11-10T10:00:00+00:00',
-                'senderName' => 'Tester',
-                'processedAt' => null,
-                'handler' => null,
-            ])
-        );
+        $client->request('POST', '/api/messages', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'type' => 'info',
+            'subject' => 'Min',
+            'content' => 'Cat',
+            'date' => '2025-11-10T10:00:00+00:00',
+            'senderName' => 'Tester',
+            'processedAt' => null,
+            'handler' => null,
+        ]));
 
         $this->assertResponseStatusCodeSame(201);
 
         $responseData = json_decode($client->getResponse()->getContent(), true);
         $messageId = $responseData['data']['id'] ?? null;
+
         $this->assertNotNull($messageId, 'Er moet een message ID terugkomen.');
 
-        $client->request(
-            'PUT',
-            "/api/messages/{$messageId}",
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'type' => 'warning',
-                'subject' => 'Update message',
-                'content' => 'New message',
-                'date' => '2025-11-11T10:00:00+00:00',
-                'senderName' => 'Senior Tester',
-                'processedAt' => null,
-                'handler' => 'HandlerX',
-            ])
-        );
+        $client->request('PUT', "/api/messages/{$messageId}", [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'type' => 'warning',
+            'subject' => 'Update message',
+            'content' => 'New message',
+            'date' => '2025-11-11T10:00:00+00:00',
+            'senderName' => 'Senior Tester',
+            'processedAt' => null,
+            'handler' => 'HandlerX',
+        ]));
 
         $this->assertResponseStatusCodeSame(200);
 
@@ -100,5 +91,19 @@ class MessageControllerTest extends WebTestCase
         $this->assertSame('Update message', $updatedMessage['subject']);
         $this->assertSame('New message', $updatedMessage['content']);
         $this->assertSame('Senior Tester', $updatedMessage['senderName']);
+    }
+
+    public function testGetMessage(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/messages/1');
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $response = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('data', $response);
+        $this->assertArrayHasKey('id', $response['data']);
     }
 }
